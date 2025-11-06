@@ -1,0 +1,13 @@
+Build a simple browser app (no backend) using HTML, CSS, and JavaScript that shows a circular text entry system controlled by the mouse.
+
+Requirements:
+- Center: shows current letter (default "a").
+- Two rings: middle ring shows 5 predicted next letters, outer ring shows remaining 21 letters.
+- Clicking a letter moves it to the center, adds it to the typed text (shown at top), and updates predictions.
+- Left side buttons: Numbers (toggle digits/symbols), Shift (toggle case).
+- Right side buttons: Delete (undo last), Space (add space and reset predictions).
+- Use SVG for rendering circles and text.
+- Include simple prediction logic (NEXT object mapping letter → top 5 letters).
+- Implement Delete using a history stack.
+
+Create 3 files: index.html, styles.css, main.js — runnable locally.

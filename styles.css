@@ -1,0 +1,178 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  overflow: hidden;
+  /* prevent scroll */
+}
+
+.container {
+  position: relative;
+  width: 100vw;
+  max-width: none;
+  padding: 12px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  /* center vertical stack within viewport */
+}
+
+.typed-text {
+  text-align: center;
+  font-size: 20px;
+  font-weight: bold;
+  color: white;
+  margin-bottom: 10px;
+  min-height: 32px;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  word-wrap: break-word;
+}
+
+.controls {
+  display: none;
+}
+
+.main-area {
+  display: grid;
+  grid-template-columns: max-content auto max-content;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 8px;
+  justify-content: center;
+  /* center grid horizontally within container */
+  margin-top: auto;
+  /* center vertically within container */
+  margin-bottom: auto;
+}
+
+.left-controls,
+.right-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Double-sized side buttons */
+.left-controls .control-btn,
+.right-controls .control-btn {
+  padding: 20px 32px;
+  /* 2x padding */
+  font-size: 28px;
+  /* 2x font size */
+  width: 220px;
+}
+
+.control-btn {
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.control-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+}
+
+.control-btn.active {
+  background: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+.circle-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+}
+
+.space-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 6px;
+}
+
+/* Make Space button as wide as the biggest ring (match #circleSvg sizing) */
+.space-container .control-btn {
+  width: min(92vmin, 96vw, 80vh);
+  font-size: 20px;
+}
+
+#circleSvg {
+  width: 92vmin;
+  height: 92vmin;
+  max-width: 96vw;
+  max-height: 80vh;
+}
+
+.letter {
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s ease;
+}
+
+.letter:hover {
+  opacity: 1;
+  transform: none;
+  /* avoid shifting target on hover */
+  stroke: #ffd54f;
+  stroke-width: 3.5;
+  fill: rgba(255, 213, 79, 0.25);
+}
+
+.slice {
+  cursor: pointer;
+  fill: rgba(255, 255, 255, 0.18);
+  stroke: white;
+  stroke-width: 2;
+  transition: fill 0.2s ease, stroke 0.2s ease, stroke-width 0.2s ease;
+}
+
+.slice:hover {
+  fill: rgba(255, 213, 79, 0.28);
+  stroke: #ffd54f;
+  stroke-width: 3.5;
+}
+
+.letter-text {
+  font-size: 24px;
+  font-weight: bold;
+  fill: white;
+  text-anchor: middle;
+  dominant-baseline: central;
+  pointer-events: none;
+}
+
+.center-letter {
+  font-size: 44px;
+  fill: white;
+  font-weight: bold;
+  text-anchor: middle;
+  dominant-baseline: central;
+  pointer-events: none;
+}
+
+.circle-ring {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.3);
+  stroke-width: 2;
+}

@@ -1,4 +1,4 @@
-# Circular Text Entry (No Backend)
+# Circular Text Entry
 
 A simple browser app (HTML/CSS/JS) that renders a circular text entry system using SVG. The center shows the current letter, the middle ring shows 5 predicted next letters, and the outer ring shows the remaining letters. Buttons allow toggling numbers/symbols, shifting case, deleting, and inserting spaces.
 

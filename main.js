@@ -6,8 +6,8 @@ const DEFAULT_UNIGRAM_ORDER = 'etaoinshrdlcumwfgypbvkjxqz';
 const STORAGE_KEY = 'circular_text_entry_counts_v1';
 
 const counts = {
-  bi: Object.create(null), // key: prev+next
-  uni: Object.create(null) // key: char
+  bi: Object.create(null), // key: prev+next
+  uni: Object.create(null) // key: char
 };
 
 function loadCounts() {
@@ -43,6 +43,11 @@ let history = [];
 let isUppercase = false;
 let isNumbersMode = false;
 let initialFullRing = true; // show all letters in a big circle initially
+let targetText = '';
+let sessionStart = null;
+let lastInputTime = null;
+let sessionEnd = null;
+const entryLog = [];
 
 // Digits and symbols
 const DIGITS = '0123456789';
@@ -56,13 +61,165 @@ const shiftBtn = document.getElementById('shiftBtn');
 const deleteBtn = document.getElementById('deleteBtn');
 const spaceBtn = document.getElementById('spaceBtn');
 const clearBtn = document.getElementById('clearBtn');
+const periodBtn = document.getElementById('periodBtn');
+const exportLogBtn = document.getElementById('exportLogBtn');
+const targetInput = document.getElementById('targetInput');
+const wpmValue = document.getElementById('wpmValue');
+const msdValue = document.getElementById('msdValue');
 
 // Save state to history
 function saveState() {
-  history.push({
-    currentLetter: currentLetter,
-    typedText: typedText
-  });
+  history.push({
+    currentLetter: currentLetter,
+    typedText: typedText
+  });
+}
+
+function logEvent(type, value) {
+  entryLog.push({
+    type,
+    value,
+    timestampMs: performance.now(),
+    text: typedText
+  });
+}
+
+// Track keystrokes to compute WPM and MSD
+function recordInput(isTerminal = false) {
+  const now = performance.now();
+  if (typedText.length === 0) {
+    sessionStart = null;
+    lastInputTime = null;
+    sessionEnd = null;
+    updateMetrics();
+    return;
+  }
+
+  if (!sessionStart) {
+    sessionStart = now;
+  }
+  lastInputTime = now;
+  if (isTerminal && !sessionEnd) {
+    sessionEnd = now;
+  }
+  updateMetrics();
+}
+
+function levenshteinDistance(a, b) {
+  const m = a.length;
+  const n = b.length;
+  const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+
+  for (let i = 0; i <= m; i++) dp[i][0] = i;
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      dp[i][j] = Math.min(
+        dp[i - 1][j] + 1,       // deletion
+        dp[i][j - 1] + 1,       // insertion
+        dp[i - 1][j - 1] + cost // substitution
+      );
+    }
+  }
+
+  return dp[m][n];
+}
+
+function computeWpm() {
+  if (!sessionStart || !lastInputTime || typedText.length === 0) return null;
+  const endTime = sessionEnd || lastInputTime;
+  const elapsedMinutes = (endTime - sessionStart) / 60000;
+  if (elapsedMinutes <= 0) return null;
+  return (typedText.length / 5) / elapsedMinutes;
+}
+
+function updateMetrics() {
+  const wpm = computeWpm();
+  wpmValue.textContent = wpm ? wpm.toFixed(1) : '--';
+
+  const msd = computeMsd();
+  msdValue.textContent = msd !== null ? String(msd) : '--';
+}
+
+function handleTargetChange(event) {
+  targetText = event.target.value;
+  updateMetrics();
+}
+
+function resetShiftAfterInput() {
+  if (isUppercase) {
+    isUppercase = false;
+    shiftBtn.classList.remove('active');
+  }
+}
+
+function computeMsd() {
+  if (!targetText) return null;
+  return levenshteinDistance(targetText, typedText);
+}
+
+function computeMsdForText(text) {
+  if (!targetText) return null;
+  return levenshteinDistance(targetText, text);
+}
+
+function csvEscape(value) {
+  if (value === null || value === undefined) return '';
+  const str = String(value);
+  if (/[",\n]/.test(str)) {
+    return `"${str.replace(/"/g, '""')}"`;
+  }
+  return str;
+}
+
+function exportLog() {
+  const wpm = computeWpm();
+  const msd = computeMsd();
+  const rows = [];
+  rows.push(['target_phrase', targetText || '']);
+  rows.push(['wpm', wpm ? wpm.toFixed(2) : '']);
+  rows.push(['msd', msd !== null ? msd : '']);
+  rows.push([]);
+  rows.push(['index', 'type', 'value', 'timestamp_s', 'text_after', 'msd']);
+
+  const start = sessionStart ?? (entryLog[0] ? entryLog[0].timestampMs : 0);
+  const initialMsd = computeMsdForText('');
+  rows.push([
+    0,
+    'start',
+    '',
+    '0.000',
+    '',
+    initialMsd !== null ? initialMsd : ''
+  ]);
+
+  entryLog.forEach((entry, idx) => {
+    const tsSeconds = start ? (entry.timestampMs - start) / 1000 : entry.timestampMs / 1000;
+    const msdEntry = computeMsdForText(entry.text);
+    rows.push([
+      idx + 1,
+      entry.type,
+      entry.value,
+      tsSeconds.toFixed(3),
+      entry.text,
+      msdEntry !== null ? msdEntry : ''
+    ]);
+  });
+
+  const csv = rows.map(row => row.map(csvEscape).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const ts = new Date().toISOString().replace(/[:.]/g, '-');
+  const safeTarget = (targetText || 'target').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'target';
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `entry-log-${safeTarget}-${ts}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 // Get available letters for outer ring
@@ -315,62 +472,86 @@ function updateDisplay() {
 
 // Select a letter (from predictions or outer ring)
 function selectLetter(letter) {
-  saveState();
-  const letterToAdd = isUppercase ? letter.toUpperCase() : letter;
-  const prevChar = typedText.length ? typedText[typedText.length - 1] : ' ';
-  typedText += letterToAdd;
-  observeChar(prevChar, letter);
-  currentLetter = letter.toLowerCase();
-  initialFullRing = false;
-  updateDisplay();
+  saveState();
+  const letterToAdd = isUppercase ? letter.toUpperCase() : letter;
+  const prevChar = typedText.length ? typedText[typedText.length - 1] : ' ';
+  typedText += letterToAdd;
+  observeChar(prevChar, letter);
+  currentLetter = letter.toLowerCase();
+  initialFullRing = false;
+  logEvent('insert', letterToAdd);
+  resetShiftAfterInput();
+  recordInput();
+  updateDisplay();
 }
 
 // Select a character (digits/symbols)
 function selectChar(char) {
-  saveState();
-  const prevChar = typedText.length ? typedText[typedText.length - 1] : ' ';
-  typedText += char;
-  if (ALPHABET.includes(char.toLowerCase()) || char === ' ') {
-    observeChar(prevChar, char);
-  } else {
-    counts.uni[char] = (counts.uni[char] || 0) + 1;
-    saveCounts();
-  }
-  initialFullRing = false;
-  updateDisplay();
+  saveState();
+  const prevChar = typedText.length ? typedText[typedText.length - 1] : ' ';
+  typedText += char;
+  if (ALPHABET.includes(char.toLowerCase()) || char === ' ') {
+    observeChar(prevChar, char);
+  } else {
+    counts.uni[char] = (counts.uni[char] || 0) + 1;
+    saveCounts();
+  }
+  initialFullRing = false;
+  logEvent('insert', char);
+  resetShiftAfterInput();
+  recordInput(char === '.');
+  updateDisplay();
 }
 
 // Delete last character
 function deleteLast() {
-  if (history.length === 0) return;
+  if (history.length === 0) return;
 
-  const lastState = history.pop();
-  currentLetter = lastState.currentLetter;
-  typedText = lastState.typedText;
-  updateDisplay();
+  const removedChar = typedText.slice(-1);
+  const lastState = history.pop();
+  currentLetter = lastState.currentLetter;
+  typedText = lastState.typedText;
+  sessionEnd = null;
+  logEvent('delete', removedChar);
+  recordInput();
+  updateDisplay();
 }
 
 // Add space
 function addSpace() {
-  saveState();
-  const prevChar = typedText.length ? typedText[typedText.length - 1] : ' ';
-  typedText += ' ';
-  // Reset to default after space
-  currentLetter = ' ';
-  observeChar(prevChar, ' ');
-  initialFullRing = false;
-  updateDisplay();
+  saveState();
+  const prevChar = typedText.length ? typedText[typedText.length - 1] : ' ';
+  typedText += ' ';
+  // Reset to default after space
+  currentLetter = ' ';
+  observeChar(prevChar, ' ');
+  initialFullRing = false;
+  logEvent('insert', ' ');
+  resetShiftAfterInput();
+  recordInput();
+  updateDisplay();
+}
+
+function addPeriod() {
+  selectChar('.');
 }
 
 // Clear all input and reset rings to initial state
 function clearAll() {
-  typedText = '';
-  history = [];
-  currentLetter = 'a';
-  isNumbersMode = false;
-  initialFullRing = true;
-  numbersBtn.classList.remove('active');
-  updateDisplay();
+  typedText = '';
+  history = [];
+  currentLetter = 'a';
+  isNumbersMode = false;
+  isUppercase = false;
+  initialFullRing = true;
+  numbersBtn.classList.remove('active');
+  shiftBtn.classList.remove('active');
+  entryLog.length = 0;
+  sessionStart = null;
+  lastInputTime = null;
+  sessionEnd = null;
+  recordInput();
+  updateDisplay();
 }
 
 // Toggle numbers mode
@@ -393,7 +574,14 @@ shiftBtn.addEventListener('click', toggleShift);
 deleteBtn.addEventListener('click', deleteLast);
 spaceBtn.addEventListener('click', addSpace);
 clearBtn.addEventListener('click', clearAll);
+targetInput.addEventListener('input', handleTargetChange);
+exportLogBtn.addEventListener('click', exportLog);
+periodBtn.addEventListener('click', addPeriod);
 
 // Initial display
 loadCounts();
 updateDisplay();
+updateMetrics();
+
+// Expose log for debugging/export
+window.getEntryLog = () => entryLog.slice();

@@ -10,6 +10,23 @@
 
 <body>
   <div class="container">
+    <div class="target-row">
+      <label for="targetInput">Target text:</label>
+      <input id="targetInput" type="text" placeholder="Enter phrase to evaluate WPM/MSD" />
+    </div>
+    <div class="metrics-row">
+      <div class="metric">
+        <div class="metric-label">WPM</div>
+        <div class="metric-value" id="wpmValue">--</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">MSD</div>
+        <div class="metric-value" id="msdValue">--</div>
+      </div>
+    </div>
+    <div class="actions-row">
+      <button id="exportLogBtn" class="control-btn slim">Download CSV</button>
+    </div>
     <div class="typed-text" id="typedText"></div>
     <div class="main-area">
       <div class="left-controls">
@@ -25,7 +42,8 @@
       </div>
     </div>
     <div class="space-container">
-      <button id="spaceBtn" class="control-btn">Space</button>
+      <button id="spaceBtn" class="control-btn space-btn">Space</button>
+      <button id="periodBtn" class="control-btn period-btn">.</button>
     </div>
   </div>
   <script src="main.js"></script>

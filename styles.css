@@ -18,12 +18,17 @@ body {
 .container {
   position: relative;
   width: 100vw;
-  max-width: none;
-  padding: 12px;
-  height: 100vh;
+  max-width: 1100px;
+  padding: 20px;
+  padding-top: calc(env(safe-area-inset-top, 0px) + 24px);
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 24px);
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
+  align-items: center;
+  margin: 0 auto;
+  gap: 10px;
   /* center vertical stack within viewport */
 }
 
@@ -40,6 +45,54 @@ body {
   word-wrap: break-word;
 }
 
+.target-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+  color: white;
+  width: 100%;
+  max-width: 840px;
+}
+
+.target-row input {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: none;
+  font-size: 14px;
+}
+
+.metrics-row {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 6px;
+  width: 100%;
+  max-width: 840px;
+}
+
+.metric {
+  background: rgba(255, 255, 255, 0.15);
+  padding: 8px 14px;
+  border-radius: 10px;
+  color: white;
+  min-width: 90px;
+  text-align: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+}
+
+.metric-label {
+  font-size: 12px;
+  opacity: 0.8;
+  letter-spacing: 0.5px;
+}
+
+.metric-value {
+  font-size: 22px;
+  font-weight: bold;
+}
+
 .controls {
   display: none;
 }
@@ -49,12 +102,8 @@ body {
   grid-template-columns: max-content auto max-content;
   align-items: center;
   gap: 16px;
-  margin-bottom: 8px;
+  margin: 4px 0 6px 0;
   justify-content: center;
-  /* center grid horizontally within container */
-  margin-top: auto;
-  /* center vertically within container */
-  margin-bottom: auto;
 }
 
 .left-controls,
@@ -108,20 +157,29 @@ body {
 .space-container {
   display: flex;
   justify-content: center;
-  margin-top: 6px;
+  margin-top: -14px;
+  width: 100%;
+  max-width: 920px;
+  gap: 8px;
 }
 
 /* Make Space button as wide as the biggest ring (match #circleSvg sizing) */
-.space-container .control-btn {
-  width: min(92vmin, 96vw, 80vh);
+.space-container .space-btn {
+  width: min(70vmin, 82vw, 60vh);
   font-size: 20px;
 }
 
+.space-container .period-btn {
+  min-width: 70px;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
 #circleSvg {
-  width: 92vmin;
-  height: 92vmin;
-  max-width: 96vw;
-  max-height: 80vh;
+  width: 78vmin;
+  height: 78vmin;
+  max-width: 88vw;
+  max-height: 60vh;
 }
 
 .letter {

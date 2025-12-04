@@ -66,6 +66,8 @@ const exportLogBtn = document.getElementById('exportLogBtn');
 const targetInput = document.getElementById('targetInput');
 const wpmValue = document.getElementById('wpmValue');
 const msdValue = document.getElementById('msdValue');
+const dropdownBtn = document.getElementById('dropdownBtn');
+const dropdownMenu = document.getElementById('dropdownMenu');
 
 // Save state to history
 function saveState() {
@@ -224,10 +226,9 @@ function exportLog() {
 
 // Get available letters for outer ring
 function getOuterRingLetters() {
-  const alphabet = 'abcdefghijklmnopqrstuvwxyz';
-  const predicted = getPredictedLetters();
-  const used = [currentLetter.toLowerCase(), ...predicted.map(l => l.toLowerCase())];
-  return alphabet.split('').filter(letter => !used.includes(letter));
+  const alphabet = 'abcdefghijklmnopqrstuvwxyz';
+  // Return all letters, regardless of whether they're in the middle ring or center
+  return alphabet.split('');
 }
 
 // Get predicted letters based on current letter (adaptive)
@@ -577,9 +578,51 @@ clearBtn.addEventListener('click', clearAll);
 targetInput.addEventListener('input', handleTargetChange);
 exportLogBtn.addEventListener('click', exportLog);
 periodBtn.addEventListener('click', addPeriod);
+dropdownBtn.addEventListener('click', toggleDropdown);
+
+// Load sentences from JSON and populate dropdown menu
+async function loadSentences() {
+  try {
+    const response = await fetch('sentences.json');
+    const sentences = await response.json();
+    
+    // Clear existing items
+    dropdownMenu.innerHTML = '';
+    
+    // Add each sentence as a dropdown item
+    sentences.forEach(sentence => {
+      const item = document.createElement('div');
+      item.className = 'dropdown-menu-item';
+      item.textContent = sentence;
+      item.addEventListener('click', () => {
+        targetInput.value = sentence;
+        targetText = sentence;
+        updateMetrics();
+        dropdownMenu.classList.remove('show');
+      });
+      dropdownMenu.appendChild(item);
+    });
+  } catch (error) {
+    console.error('Error loading sentences:', error);
+  }
+}
+
+// Toggle dropdown menu
+function toggleDropdown() {
+  dropdownMenu.classList.toggle('show');
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', (event) => {
+  const inputContainer = targetInput.closest('.input-with-dropdown');
+  if (!inputContainer.contains(event.target)) {
+    dropdownMenu.classList.remove('show');
+  }
+});
 
 // Initial display
 loadCounts();
+loadSentences();
 updateDisplay();
 updateMetrics();
 

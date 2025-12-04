@@ -55,12 +55,74 @@ body {
   max-width: 840px;
 }
 
+.input-with-dropdown {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
 .target-row input {
   flex: 1;
   padding: 10px 12px;
+  padding-right: 40px;
   border-radius: 8px;
   border: none;
   font-size: 14px;
+}
+
+.dropdown-btn {
+  position: absolute;
+  right: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 4px;
+  color: white;
+  cursor: pointer;
+  padding: 6px 10px;
+  font-size: 12px;
+  transition: background 0.2s ease;
+  z-index: 2;
+}
+
+.dropdown-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 1000;
+  display: none;
+  margin-top: 4px;
+}
+
+.dropdown-menu.show {
+  display: block;
+}
+
+.dropdown-menu-item {
+  padding: 10px 12px;
+  cursor: pointer;
+  color: #333;
+  font-size: 14px;
+  border-bottom: 1px solid #eee;
+  transition: background 0.2s ease;
+}
+
+.dropdown-menu-item:last-child {
+  border-bottom: none;
+}
+
+.dropdown-menu-item:hover {
+  background: #f0f0f0;
 }
 
 .metrics-row {

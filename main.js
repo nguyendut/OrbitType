@@ -57,7 +57,10 @@ const trialSentences = [
   "Every bird sang sweet songs in the quiet dawn.",
   "They watched clouds drift across the golden sky.",
   "A clever mouse slipped past the sleepy cat.",
-  "Green leaves danced gently in the warm breeze."
+  "Green leaves danced gently in the warm breeze.",
+  "He quickly wrote notes before the test began.",
+  "The tall man wore boots made of soft leather.",
+  "Old clocks ticked loudly in the silent room."
 ];
 const allTrialLogs = [];
 

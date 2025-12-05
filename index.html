@@ -10,11 +10,19 @@
 
 <body>
   <div class="container">
+    <div class="trial-controls">
+      <button id="startTrialBtn" class="control-btn trial-btn">Start Trial</button>
+      <div id="trialInfo" class="trial-info" style="display: none;">
+        <span id="trialCounter">Trial 1 of 5</span>
+        <button id="nextTrialBtn" class="control-btn trial-btn">Next Trial</button>
+        <button id="startOverBtn" class="control-btn trial-btn" style="display: none;">Start Over</button>
+      </div>
+    </div>
     <div class="target-row">
       <label for="targetInput">Target text:</label>
       <div class="input-with-dropdown">
-        <input id="targetInput" type="text" placeholder="Enter phrase to evaluate WPM/MSD" />
-        <button id="dropdownBtn" class="dropdown-btn" aria-label="Select sentence">▼</button>
+        <input id="targetInput" type="text" placeholder="Click 'Start Trial' to begin" readonly />
+        <button id="dropdownBtn" class="dropdown-btn" aria-label="Select sentence" style="display: none;">▼</button>
         <div id="dropdownMenu" class="dropdown-menu"></div>
       </div>
     </div>

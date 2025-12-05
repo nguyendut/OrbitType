@@ -49,6 +49,18 @@ let lastInputTime = null;
 let sessionEnd = null;
 const entryLog = [];
 
+// Trial system state
+let trialMode = false;
+let currentTrialIndex = 0;
+const trialSentences = [
+  "She packed twelve blue pens in her small bag.",
+  "Every bird sang sweet songs in the quiet dawn.",
+  "They watched clouds drift across the golden sky.",
+  "A clever mouse slipped past the sleepy cat.",
+  "Green leaves danced gently in the warm breeze."
+];
+const allTrialLogs = [];
+
 // Digits and symbols
 const DIGITS = '0123456789';
 const SYMBOLS = '!@#$%^&*().';
@@ -68,6 +80,11 @@ const wpmValue = document.getElementById('wpmValue');
 const msdValue = document.getElementById('msdValue');
 const dropdownBtn = document.getElementById('dropdownBtn');
 const dropdownMenu = document.getElementById('dropdownMenu');
+const startTrialBtn = document.getElementById('startTrialBtn');
+const nextTrialBtn = document.getElementById('nextTrialBtn');
+const startOverBtn = document.getElementById('startOverBtn');
+const trialInfo = document.getElementById('trialInfo');
+const trialCounter = document.getElementById('trialCounter');
 
 // Save state to history
 function saveState() {
@@ -484,6 +501,7 @@ function selectLetter(letter) {
   resetShiftAfterInput();
   recordInput();
   updateDisplay();
+  checkTrialCompletion();
 }
 
 // Select a character (digits/symbols)
@@ -502,6 +520,7 @@ function selectChar(char) {
   resetShiftAfterInput();
   recordInput(char === '.');
   updateDisplay();
+  checkTrialCompletion();
 }
 
 // Delete last character
@@ -531,6 +550,7 @@ function addSpace() {
   resetShiftAfterInput();
   recordInput();
   updateDisplay();
+  checkTrialCompletion();
 }
 
 function addPeriod() {
@@ -569,6 +589,154 @@ function toggleShift() {
   updateDisplay();
 }
 
+// Trial system functions
+function startTrial() {
+  trialMode = true;
+  currentTrialIndex = 0;
+  allTrialLogs.length = 0;
+  loadTrialSentence();
+  startTrialBtn.style.display = 'none';
+  trialInfo.style.display = 'flex';
+  nextTrialBtn.disabled = false;
+  nextTrialBtn.style.display = 'inline-block';
+  nextTrialBtn.textContent = 'Next Trial';
+  startOverBtn.style.display = 'none';
+  updateTrialCounter();
+}
+
+function loadTrialSentence() {
+  clearAll();
+  targetText = trialSentences[currentTrialIndex];
+  targetInput.value = targetText;
+  updateMetrics();
+}
+
+function updateTrialCounter() {
+  trialCounter.textContent = `Trial ${currentTrialIndex + 1} of ${trialSentences.length}`;
+}
+
+function checkTrialCompletion() {
+  if (!trialMode) return;
+
+  // Check if typed text matches target exactly
+  if (typedText === targetText) {
+    // Save this trial's log
+    const trialData = {
+      trialNumber: currentTrialIndex + 1,
+      targetText: targetText,
+      wpm: computeWpm(),
+      msd: computeMsd(),
+      log: entryLog.slice()
+    };
+    allTrialLogs.push(trialData);
+
+    // All trials complete
+    if (currentTrialIndex >= trialSentences.length - 1) {
+      trialCounter.textContent = 'All trials complete!';
+      nextTrialBtn.style.display = 'none';
+      startOverBtn.style.display = 'inline-block';
+      exportAllTrials();
+    }
+  }
+}
+
+function nextTrial() {
+  // If on last trial and button says "Finish", export all results
+  if (currentTrialIndex >= trialSentences.length - 1 && nextTrialBtn.textContent === 'Finish') {
+    // Save final trial data if not already saved
+    if (typedText.length > 0 && allTrialLogs.length <= currentTrialIndex) {
+      const trialData = {
+        trialNumber: currentTrialIndex + 1,
+        targetText: targetText,
+        wpm: computeWpm(),
+        msd: computeMsd(),
+        log: entryLog.slice()
+      };
+      allTrialLogs.push(trialData);
+    }
+    trialCounter.textContent = 'All trials complete!';
+    nextTrialBtn.style.display = 'none';
+    startOverBtn.style.display = 'inline-block';
+    exportAllTrials();
+    return;
+  }
+
+  // Save current trial data before moving to next
+  if (typedText.length > 0) {
+    const trialData = {
+      trialNumber: currentTrialIndex + 1,
+      targetText: targetText,
+      wpm: computeWpm(),
+      msd: computeMsd(),
+      log: entryLog.slice()
+    };
+    // Only add if not already added (by checkTrialCompletion)
+    if (allTrialLogs.length <= currentTrialIndex) {
+      allTrialLogs.push(trialData);
+    }
+  }
+
+  currentTrialIndex++;
+  if (currentTrialIndex < trialSentences.length) {
+    loadTrialSentence();
+    updateTrialCounter();
+
+    // Update button text if now on last trial
+    if (currentTrialIndex >= trialSentences.length - 1) {
+      nextTrialBtn.textContent = 'Finish';
+    } else {
+      nextTrialBtn.textContent = 'Next Trial';
+    }
+  }
+}
+
+function startOver() {
+  startTrial();
+}
+
+function exportAllTrials() {
+  const rows = [];
+  rows.push(['Trial System Results']);
+  rows.push(['Total Trials', trialSentences.length]);
+  rows.push([]);
+
+  allTrialLogs.forEach((trial) => {
+    rows.push([`Trial ${trial.trialNumber}`]);
+    rows.push(['Target', trial.targetText]);
+    rows.push(['WPM', trial.wpm ? trial.wpm.toFixed(2) : '']);
+    rows.push(['MSD', trial.msd !== null ? trial.msd : '']);
+    rows.push([]);
+    rows.push(['index', 'type', 'value', 'timestamp_s', 'text_after', 'msd']);
+
+    const start = trial.log[0] ? trial.log[0].timestampMs : 0;
+    trial.log.forEach((entry, idx) => {
+      const tsSeconds = (entry.timestampMs - start) / 1000;
+      const msdEntry = computeMsdForText(entry.text);
+      rows.push([
+        idx + 1,
+        entry.type,
+        entry.value,
+        tsSeconds.toFixed(3),
+        entry.text,
+        msdEntry !== null ? msdEntry : ''
+      ]);
+    });
+    rows.push([]);
+  });
+
+  const csv = rows.map(row => row.map(csvEscape).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const ts = new Date().toISOString().replace(/[:.]/g, '-');
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `trial-results-${ts}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 // Event listeners
 numbersBtn.addEventListener('click', toggleNumbers);
 shiftBtn.addEventListener('click', toggleShift);
@@ -579,6 +747,9 @@ targetInput.addEventListener('input', handleTargetChange);
 exportLogBtn.addEventListener('click', exportLog);
 periodBtn.addEventListener('click', addPeriod);
 dropdownBtn.addEventListener('click', toggleDropdown);
+startTrialBtn.addEventListener('click', startTrial);
+nextTrialBtn.addEventListener('click', nextTrial);
+startOverBtn.addEventListener('click', startOver);
 
 // Load sentences from JSON and populate dropdown menu
 async function loadSentences() {
